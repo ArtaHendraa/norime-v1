@@ -68,7 +68,7 @@ const HomePage = () => {
   const loadNextPage = () => loadPage(currentPage + 1);
   const loadPrevPage = () => loadPage(currentPage - 1);
 
-  const displayedPages = 24;
+  const displayedPages = 20;
 
   const calculateDisplayedPages = () => {
     const startPage = Math.max(currentPage - Math.floor(displayedPages / 2), 1);

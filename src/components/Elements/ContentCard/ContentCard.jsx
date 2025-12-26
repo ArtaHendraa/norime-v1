@@ -41,7 +41,7 @@ const ContentCard = (props) => {
               </h1>
             </div>
             <img
-              className="w-full h-auto bg-cover rounded-lg"
+              className="w-full h-auto bg-cover rounded-lg aspect-[4/5] object-cover"
               loading="lazy"
               src={anime.images.webp.image_url}
               alt={anime.title}

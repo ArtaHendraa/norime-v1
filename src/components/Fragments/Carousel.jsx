@@ -31,7 +31,7 @@ const Carousel = ({ data = [] }) => {
               <main className="flex justify-between items-end bg-[#141518] relative">
                 <div className="absolute w-full h-full xl:flex xl:items-end carousel-shadow-sm md:carousel-shadow-md xl:carousel-shadow-xl">
                   <img
-                    className="hidden object-contain object-left w-auto m-4 rounded-md xl:block"
+                    className="hidden object-contain object-left w-auto m-4 rounded-md xl:block aspect-[4/5]"
                     src={carouselItem.images.webp.image_url}
                     alt={carouselItem.title}
                   />

@@ -73,7 +73,7 @@ const GenrePage = () => {
     loadPage(currentPage - 1);
   };
 
-  const displayedPages = 24;
+  const displayedPages = 20;
   const calculateDisplayedPages = () => {
     const startPage = Math.max(currentPage - Math.floor(displayedPages / 2), 1);
     const endPage = Math.min(startPage + displayedPages - 1, totalPages);
