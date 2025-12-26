@@ -8,7 +8,6 @@ const apiWithRateLimit = rateLimit(api, {
   perMilliseconds: 1000,
 });
 
-// ==================== LIST ANIME ====================
 export const getAnime = async (page, apiConfig) => {
   const { baseURL, limit } = apiConfig;
   const itemsPerPage = limit || 24;
@@ -28,7 +27,6 @@ export const getAnime = async (page, apiConfig) => {
   };
 };
 
-// ==================== CAROUSEL ====================
 export const getCarouselAnime = async () => {
   const response = await apiWithRateLimit.get(
     "https://api.jikan.moe/v4/top/anime?limit=6"
@@ -36,7 +34,6 @@ export const getCarouselAnime = async () => {
   return response.data.data;
 };
 
-// ==================== DETAIL ====================
 export const getDetailAnime = async (mal_id) => {
   const response = await apiWithRateLimit.get(
     `https://api.jikan.moe/v4/anime/${mal_id}/full`
@@ -44,7 +41,6 @@ export const getDetailAnime = async (mal_id) => {
   return response.data?.data;
 };
 
-// ==================== EPISODES ====================
 export const getEpisodeAnime = async (mal_id) => {
   const response = await apiWithRateLimit.get(
     `https://api.jikan.moe/v4/anime/${mal_id}/episodes`
@@ -52,7 +48,6 @@ export const getEpisodeAnime = async (mal_id) => {
   return response.data?.data || [];
 };
 
-// ==================== GENRES ====================
 export const getAnimeGenresList = async () => {
   const response = await apiWithRateLimit.get(
     "https://api.jikan.moe/v4/genres/anime"
@@ -60,7 +55,6 @@ export const getAnimeGenresList = async () => {
   return response.data?.data || [];
 };
 
-// ==================== BY GENRE ====================
 export const getAnimeGenre = async (page, apiConfig, mal_id) => {
   const { baseURL, limit } = apiConfig;
   const itemsPerPage = limit || 24;
