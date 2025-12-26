@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getAnime } from "../services/anime.service.js";
+import { getAnime, getCarouselAnime } from "../services/anime.service.js";
 import MainLayout from "../components/Layouts/MainLayout.jsx";
 import ContentLayout from "../components/Layouts/ContentLayout.jsx";
 import ContentCard from "../components/Elements/ContentCard/ContentCard.jsx";
@@ -11,9 +11,10 @@ import Carousel from "../components/Fragments/Carousel.jsx";
 const HomePage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [anime, setAnime] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [totalPages, setTotalPages] = useState(0);
   const [cachedPages, setCachedPages] = useState({});
+  const [carouselData, setCarouselData] = useState([]);
 
   const apiConfig = {
     baseURL: "https://api.jikan.moe/v4/seasons/now?filter=tv",
@@ -25,34 +26,34 @@ const HomePage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const fetchData = async (page, retryAttempt = 0) => {
+  const fetchData = async (page) => {
     setLoading(true);
 
     try {
-      if (cachedPages[page]) {
-        const cachedData = cachedPages[page];
-        setAnime(cachedData.data);
-        setTotalPages(cachedData.totalPages);
-      } else {
-        const { data, totalPages } = await getAnime(page, apiConfig);
-        setAnime(data || []);
-        setTotalPages(totalPages || 0);
+      const [animeResult, carouselResult] = await Promise.all([
+        cachedPages[page]
+          ? Promise.resolve(cachedPages[page])
+          : getAnime(page, apiConfig),
+        getCarouselAnime(),
+      ]);
 
-        setCachedPages((prev) => ({ ...prev, [page]: { data, totalPages } }));
+      const data = animeResult.data;
+      const totalPages = animeResult.totalPages;
+
+      setAnime(data);
+      setTotalPages(totalPages);
+      setCarouselData(carouselResult);
+
+      if (!cachedPages[page]) {
+        setCachedPages((prev) => ({
+          ...prev,
+          [page]: { data, totalPages },
+        }));
       }
     } catch (error) {
-      if (error.response && error.response.status === 429) {
-        const backoffDelay = 60 * 1000;
-        console.warn("Rate limited. Retrying after a delay...");
-        await new Promise((resolve) => setTimeout(resolve, backoffDelay));
-        fetchData(page, retryAttempt + 1);
-      } else {
-        console.error("Error fetching anime data:", error);
-      }
+      console.error(error);
     } finally {
-      setTimeout(() => {
-        setLoading(false);
-      }, 600);
+      setLoading(false);
     }
   };
 
@@ -60,19 +61,15 @@ const HomePage = () => {
     if (!loading && pageNumber >= 1 && pageNumber <= totalPages) {
       setCurrentPage(pageNumber);
       fetchData(pageNumber);
-      window.scrollTo({ top: 0 });
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
-  const loadNextPage = () => {
-    loadPage(currentPage + 1);
-  };
-
-  const loadPrevPage = () => {
-    loadPage(currentPage - 1);
-  };
+  const loadNextPage = () => loadPage(currentPage + 1);
+  const loadPrevPage = () => loadPage(currentPage - 1);
 
   const displayedPages = 24;
+
   const calculateDisplayedPages = () => {
     const startPage = Math.max(currentPage - Math.floor(displayedPages / 2), 1);
     const endPage = Math.min(startPage + displayedPages - 1, totalPages);
@@ -83,29 +80,28 @@ const HomePage = () => {
     );
   };
 
-  return (
-    <>
-      {loading ? (
-        <Loading />
-      ) : (
-        <MainLayout>
-          <Carousel />
+  if (loading) return <Loading />;
 
-          <ContentLayout title="ongoing anime">
-            <ContentCard anime={anime} banner="hidden" />
-          </ContentLayout>
-          <Pagination
-            calculateDisplayedPages={calculateDisplayedPages}
-            currentPage={currentPage}
-            totalPages={totalPages}
-            loadPrevPage={loadPrevPage}
-            loadNextPage={loadNextPage}
-            loadPage={loadPage}
-          />
-          <Footer />
-        </MainLayout>
-      )}
-    </>
+  return (
+    <MainLayout>
+      <Carousel data={carouselData} />
+
+      <ContentLayout title="Ongoing Anime">
+        <ContentCard anime={anime} banner="hidden" />
+      </ContentLayout>
+
+      <Pagination
+        calculateDisplayedPages={calculateDisplayedPages}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        loadPrevPage={loadPrevPage}
+        loadNextPage={loadNextPage}
+        loadPage={loadPage}
+      />
+
+      <Footer />
+    </MainLayout>
   );
 };
+
 export default HomePage;
