@@ -36,9 +36,9 @@ export const getCarouselAnime = async () => {
 
 export const getDetailAnime = async (mal_id) => {
   const response = await apiWithRateLimit.get(
-    `https://api.jikan.moe/v4/anime/${mal_id}/full`
+    `https://api.jikan.moe/v4/anime/${mal_id}`
   );
-  return response.data?.data;
+  return response.data.data;
 };
 
 export const getEpisodeAnime = async (mal_id) => {

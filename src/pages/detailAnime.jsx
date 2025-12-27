@@ -12,28 +12,30 @@ import Banner from "../components/Elements/Banner/Banner";
 
 const DetailAnime = () => {
   const { mal_id } = useParams();
-  const [detail, setDetail] = useState({});
+  const [detail, setDetail] = useState(null);
   const [episodes, setEpisode] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setLoading(true);
-    getDetailAnime(mal_id, (data) => {
-      setDetail(data);
-      setTimeout(() => {
-        setLoading(false);
-      }, 700);
-    });
-  }, [mal_id]);
+    const loadDetailPage = async () => {
+      try {
+        setLoading(true);
 
-  useEffect(() => {
-    setLoading(true);
-    getEpisodeAnime(mal_id, (data) => {
-      setEpisode(data);
-      setTimeout(() => {
+        const [detailData, episodeData] = await Promise.all([
+          getDetailAnime(mal_id),
+          getEpisodeAnime(mal_id),
+        ]);
+
+        setDetail(detailData);
+        setEpisode(episodeData);
+      } catch (error) {
+        console.error("Failed loading detail:", error);
+      } finally {
         setLoading(false);
-      }, 700);
-    });
+      }
+    };
+
+    loadDetailPage();
   }, [mal_id]);
 
   const Bookmark = () => {

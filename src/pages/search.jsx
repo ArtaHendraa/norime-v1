@@ -1,5 +1,5 @@
 import MainLayout from "../components/Layouts/MainLayout";
-import SearchBar from "../components/Elements/Search/index";
+import SearchBar from "../components/Elements/Search";
 import Loading from "../components/Elements/Loading/loading";
 import { getAnimeGenresList } from "../services/anime.service";
 import { useEffect, useState } from "react";
@@ -9,65 +9,76 @@ import Banner from "../components/Elements/Banner/Banner";
 
 const SearchPage = () => {
   const [genresAnime, setGenresAnime] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
   const [animeSearch, setAnimeSearch] = useState([]);
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(false);
 
+  // Load genres saat halaman pertama kali dibuka
   useEffect(() => {
-    setLoading(true);
-    getAnimeGenresList((data) => {
-      setGenresAnime(data);
-      setTimeout(() => {
+    const fetchGenres = async () => {
+      try {
+        setLoading(true);
+        const data = await getAnimeGenresList();
+        setGenresAnime(data || []);
+      } catch (error) {
+        console.error("Failed to load genres:", error);
+      } finally {
         setLoading(false);
-      }, 600);
-    });
+      }
+    };
+
+    fetchGenres();
   }, []);
 
-  const handleSearch = (e) => {
+  const handleSearch = async (e) => {
     e.preventDefault();
-    FetchAnime(search);
+    if (!search.trim()) return;
+
+    try {
+      setLoading(true);
+
+      const res = await fetch(
+        `https://api.jikan.moe/v4/anime?q=${search}&order_by=popularity&sort=asc&sfw=true`
+      );
+
+      const json = await res.json();
+      setAnimeSearch(json.data || []);
+    } catch (error) {
+      console.error("Search error:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const FetchAnime = async (query) => {
-    setLoading(true);
-    const temp = await fetch(
-      `https://api.jikan.moe/v4/anime?q=${query}&order_by=popularity&sort=asc&sfw=true`
-    ).then((res) => res.json());
-    setAnimeSearch(temp.data);
-    setLoading(false);
-  };
+  if (loading) return <Loading />;
 
   return (
-    <>
-      {loading ? (
-        <Loading />
-      ) : (
-        <MainLayout>
-          <SearchBar
-            type="text"
-            placeholder="Search..."
-            classname="w-full h-10"
-            onClick={handleSearch}
-            setSearch={setSearch}
-          />
-          <ColContentCard searchAnime={animeSearch} />
+    <MainLayout>
+      <SearchBar
+        type="text"
+        placeholder="Search anime..."
+        classname="w-full h-10"
+        onClick={handleSearch}
+        setSearch={setSearch}
+      />
 
-          <h1 className="mt-3 text-2xl font-semibold text-center">Genre</h1>
-          <section className="flex flex-wrap justify-start gap-3 px-4 mt-2">
-            {genresAnime.map((genre) => (
-              <a
-                key={genre.mal_id}
-                href={`genre/${genre.mal_id}/${genre.name.replace(/ /g, "_")}`}
-              >
-                <Banner classname="bg-neutral-700">{genre.name}</Banner>
-              </a>
-            ))}
-          </section>
+      <ColContentCard searchAnime={animeSearch} />
 
-          <Footer classname="" />
-        </MainLayout>
-      )}
-    </>
+      <h1 className="mt-6 text-2xl font-semibold text-center">Genre</h1>
+
+      <section className="flex flex-wrap justify-start gap-3 px-4 mt-3">
+        {genresAnime.map((genre) => (
+          <a
+            key={genre.mal_id}
+            href={`genre/${genre.mal_id}/${genre.name.replace(/ /g, "_")}`}
+          >
+            <Banner classname="bg-neutral-700">{genre.name}</Banner>
+          </a>
+        ))}
+      </section>
+
+      <Footer />
+    </MainLayout>
   );
 };
 

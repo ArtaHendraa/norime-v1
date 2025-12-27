@@ -24,34 +24,32 @@ const HomePage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const fetchData = async (page, retryAttempt = 0) => {
+  const fetchData = async (page) => {
     setLoading(true);
 
     try {
-      if (cachedPages[page]) {
-        const cachedData = cachedPages[page];
-        setAnime(cachedData.data);
-        setTotalPages(cachedData.totalPages);
-      } else {
-        const { data, totalPages } = await getAnime(page, apiConfig);
-        setAnime(data || []);
-        setTotalPages(totalPages || 0);
+      const [animeResult] = await Promise.all([
+        cachedPages[page]
+          ? Promise.resolve(cachedPages[page])
+          : getAnime(page, apiConfig),
+      ]);
 
-        setCachedPages((prev) => ({ ...prev, [page]: { data, totalPages } }));
+      const data = animeResult.data;
+      const totalPages = animeResult.totalPages;
+
+      setAnime(data);
+      setTotalPages(totalPages);
+
+      if (!cachedPages[page]) {
+        setCachedPages((prev) => ({
+          ...prev,
+          [page]: { data, totalPages },
+        }));
       }
     } catch (error) {
-      if (error.response && error.response.status === 429) {
-        const backoffDelay = 60 * 1000;
-        console.warn("Rate limited. Retrying after a delay...");
-        await new Promise((resolve) => setTimeout(resolve, backoffDelay));
-        fetchData(page, retryAttempt + 1);
-      } else {
-        console.error("Error fetching anime data:", error);
-      }
+      console.error(error);
     } finally {
-      setTimeout(() => {
-        setLoading(false);
-      }, 600);
+      setLoading(false);
     }
   };
 
@@ -59,19 +57,15 @@ const HomePage = () => {
     if (!loading && pageNumber >= 1 && pageNumber <= totalPages) {
       setCurrentPage(pageNumber);
       fetchData(pageNumber);
-      window.scrollTo({ top: 0 });
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
-  const loadNextPage = () => {
-    loadPage(currentPage + 1);
-  };
-
-  const loadPrevPage = () => {
-    loadPage(currentPage - 1);
-  };
+  const loadNextPage = () => loadPage(currentPage + 1);
+  const loadPrevPage = () => loadPage(currentPage - 1);
 
   const displayedPages = 20;
+
   const calculateDisplayedPages = () => {
     const startPage = Math.max(currentPage - Math.floor(displayedPages / 2), 1);
     const endPage = Math.min(startPage + displayedPages - 1, totalPages);
